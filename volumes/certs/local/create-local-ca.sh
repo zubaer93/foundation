@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -eu
-org=localhost-stylinecollection
+org=localhost-selfcertified
 
 sudo trust anchor --remove ca.crt || true
 

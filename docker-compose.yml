@@ -104,4 +104,4 @@ services:
 networks:
   default:
     external:
-      name: styline
+      name: own-network

@@ -53,15 +53,15 @@
 
 ## Quick Start
 #### Initialize
-1. Create `.env` file and put `COMPOSE_PROJECT_NAME=backbone`. this is used by docker compose files.
+1. Create `.env` file and put `COMPOSE_PROJECT_NAME=foundation`. this is used by docker compose files.
 ```bash
-echo "COMPOSE_PROJECT_NAME=backbone" > .env
+echo "COMPOSE_PROJECT_NAME=foundation" > .env
 ```
 2. Create `.env.run` file and put `development`. for non local environemnt this should be `production`
 ```bash
 echo "development" > .env.run
 ```
-3. Before starting other services i.e. **opencart** create self signed certificates for local development
+3. Create self signed certificates of your application for local development
 ```bash
 # create root CA. only once
 cd ./volumes/certs/local
