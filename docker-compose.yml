@@ -1,0 +1,107 @@
+version: "3.5"
+
+services:
+  #######################################
+  # Container Proxy config generator (docker-gen)
+  #######################################
+  docker-gen:
+    image: "jwilder/docker-gen:0.7.3"
+    container_name: docker-gen
+    restart: "unless-stopped"
+    env_file:
+      - .env
+    command: "-config /etc/docker-gen/templates/docker-gen.cfg"
+    volumes:
+      # shared with nginx
+      - "./volumes/conf.d:/etc/nginx/conf.d"
+      - "./volumes/vhost.d:/etc/nginx/vhost.d"
+      - "./volumes/html:/usr/share/nginx/html"
+      # shared with rsyslog
+      - "./volumes/rsyslog.d:/etc/rsyslog/rsyslog.d"
+      #
+      - "./volumes/templates:/etc/docker-gen/templates:rw"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+
+    links:
+      - rsyslog
+    logging:
+      driver: syslog
+      options:
+        tag: "docker-gen"
+        syslog-address: "tcp://localhost:5555"
+
+  #######################################
+  # Reverse Proxy (nginx)
+  #######################################
+  nginx:
+    container_name: nginx
+    # build:
+    #   context: ./dockerfiles/nginx
+    image: "nginx:1.15"
+    restart: "unless-stopped"
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "./volumes/conf.d:/etc/nginx/conf.d"
+      - "./volumes/vhost.d:/etc/nginx/vhost.d"
+      - "./volumes/html:/usr/share/nginx/html"
+    links:
+      - rsyslog
+    logging:
+      driver: syslog
+      options:
+        tag: "nginx"
+        syslog-address: "tcp://localhost:5555"
+
+  # #######################################
+  # # Log rotation (blacklabelops/logrotate)
+  # #######################################
+  logrotate:
+    container_name: logrotate
+    image: "blacklabelops/logrotate:1.2"
+    restart: "unless-stopped"
+    env_file:
+      - .env
+    volumes:
+      - "./volumes/log:/var/log/docker"
+    environment:
+      - "LOGS_DIRECTORIES=/var/log/docker"
+      - "LOGROTATE_INTERVAL=daily"
+      - "LOGROTATE_SIZE=50M"
+      - "LOGROTATE_COPIES=10"
+      - "LOGROTATE_DATEFORMAT=-%Y-%m-%d"
+      - "LOGROTATE_AUTOUPDATE=false"
+    links:
+      - rsyslog
+    logging:
+      driver: syslog
+      options:
+        tag: "logrotate"
+        syslog-address: "tcp://localhost:5555"
+
+  #######################################
+  # Log concentrator (rsyslog)
+  #######################################
+  rsyslog:
+    container_name: rsyslog
+    build:
+      context: ./dockerfiles/rsyslog
+    restart: "unless-stopped"
+    env_file:
+      - .env
+    environment:
+      - "TZ=GMT+6"
+    ports:
+      - "5555:514"
+    volumes:
+      - "./volumes/log:/var/log"
+      - "./volumes/rsyslog.d:/etc/rsyslog.d"
+
+
+networks:
+  default:
+    external:
+      name: styline
