@@ -52,6 +52,14 @@
 ```
 
 ## Quick Start
+
+#### Install these and start docker service
+1. Docker. Instructions: [Windows](https://docs.docker.com/docker-for-windows/install/#start-docker-for-windows),
+  [Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/#os-requirements),
+  [Mac](https://docs.docker.com/docker-for-mac/install/#install-and-run-docker-for-mac)
+2. Docker Compose. [Instructions](https://docs.docker.com/compose/install/#install-compose)
+3. Install python 3.6
+
 #### Initialize
 1. Create `.env` file and put `COMPOSE_PROJECT_NAME=foundation`. this is used by docker compose files.
 ```bash
