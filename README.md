@@ -2,8 +2,6 @@
 
 - Table of Contents
   - [Introduction](#introduction)
-  - [Documentation](#documentation)
-    - [Folder Structure](#folder-structure)
   - [Quick Start](#quick-start)
 
 ## Introduction
@@ -11,45 +9,6 @@
 2. **letsencrypt-nginx-proxy-companion** is only used in non local environmens to generates valid SSL certificate from [letsencrypt](https://letsencrypt.org/).
 3. for local environment self signed certificates can be created using `./volumes/certs/local/create-local-ca.sh` and `./volumes/certs/local/create-local-cert.sh` scripts.
 3. **nginx** works as reverse proxy for other applications running in docker containers
-
-
-
-## Documentation
-### Folder Structure
-```bash
-├── dockerfiles                     # dockerfiles and related files for containers
-│   ├── rsyslog
-│   │  ├── Dockerfile
-│   │  ├── rsyslog.conf
-├── volumes                         # all folders inside this are mounted in docker container
-│   ├── certs                       # ssl certificates in here
-│   │  ├── letsencrypt              # letsencrypt generated ssl certificates
-│   │     ├── .gitignore
-│   │  ├──local                     # locally generated using create-local-cert.sh
-│   │     ├── create-local-ca.sh    # creates a local root CA SSL cerficiates
-│   │     ├── create-local-cert.sh  # creates self signed cerficates for development
-│   │     ├── .gitignore            # only track bash scripts in here
-│   ├── conf.d
-│   │   ├── .gitgignore
-│   │   ├── custom.conf             # nginx configuration override
-│   ├── html
-│   │   ├── .gitgignore
-│   ├── log                         # all container log files are stored here
-│   ├── rsyslog.d                   # dokcer-gen generated config files for rsyslog
-│   ├── templates
-│   │   ├── docker-gen.cfg          # docker-gen configuration template
-│   │   ├── ngnx.tmpl               # downloaded from https://raw.githubusercontent.com/jwilder/docker-gen/master/templates/nginx.tmpl
-│   │   ├── logrotate.tmpl          # template for generating logrotate configuration files
-│   │   ├── rsyslog.tmpl            # template for generating rsyslog configuration files
-│   ├── vhost.d                     # virtualhost specific nginx config can be put here i.e. www.example.com
-│   │   ├── .gitgignore
-├── docker-compose.override.yml     # development config
-├── docker-compose.production.yml   # production config
-├── docker-compose.yml              # common config
-├── initialize.py                   # run certificate scripts to create root CA and ssl certificates
-├── README.md
-├── run.py                          # to start, stop, log proxy containers
-```
 
 ## Quick Start
 
@@ -69,8 +28,31 @@ echo "COMPOSE_PROJECT_NAME=foundation" > .env
 ```bash
 echo "development" > .env.run
 ```
-3. Create self signed certificates of your application for local development
+
+#### Start proxy containers. tasks('up', 'down', 'log')
+
+1. For up, down, build and log your containers use the following pattern
 ```bash
+# ./run.py [TASK] [CONTAINER]
+Example :
+./run.py up
+./run.py down
+./run.py log example-web
+
+# check if containers are running
+docker ps
+# should show four containers named **nginx**, **docker-gen**, **rsyslog**, **logrotate** for 'local' environement
+```
+
+#### Serve your docker application with nginx
+
+1. Expose 80 or any other port from your container
+2. Set a 'VIRTUAL_HOST=local.your-site-name.com' in your docker environment variable
+3. For staging or production deployment put 'LETSENCRYPT_HOST=your-site-name.com' and 'LETSENCRYPT_EMAIL=your-email@email.com' in docker environment variable
+3. Make sure your application and foundation is is the same network (check the foundation yml file)
+4. Now Build your application
+5. For local development you can create self signed certificate
+```
 # create root CA. only once
 cd ./volumes/certs/local
 ./create-local-ca.sh
@@ -80,17 +62,7 @@ cd ./volumes/certs/local
 127.0.0.1  local.www.example.com
 ```
 
-#### Start proxy containers. tasks('up', 'down', 'log')
-```bash
-# ./run.py [TASK] [CONTAINER]
-./run.py log example-web
-
-# check if containers are running
-docker ps
-# should show two containers named **nginx**, **docker-gen**, **rsyslog**, **logrotate** for 'local' environement
-```
-
-#### Nginx Customisation
+#### Nginx Customization
 1. There is one file `./volumes/conf.d/custom.conf` which applies to all domains served by nginx
 2. for Domain specific customisation create a file in `./voloumes/vhost.d/` directory. name of the file should match the domain name. put your customisation there and restart nginx
 ```bash
